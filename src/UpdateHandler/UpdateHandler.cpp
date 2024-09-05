@@ -23,7 +23,10 @@ bool UpdateHandler::addByte(uint8_t data) {
     uint16_t writtenBytes = _bufferPointer;
     _bufferPointer++;
 
-    if ((_fullBuffersCnt > 0) || ((_bufferPointer == _remainingBits) && (_fullBuffersCnt == 0))) {
+    bool bufferIsFull = ((BUFFER_SIZE >= writtenBytes) && (_fullBuffersCnt > 0));
+    bool writeRemainingBytes = ((_bufferPointer == _remainingBits) && (_fullBuffersCnt == 0));
+
+    if (bufferIsFull || writeRemainingBytes) {
         if (_fullBuffersCnt > 0) { _fullBuffersCnt--; }
 
         uint16_t writtenCount = Update.write(_buff, writtenBytes);
@@ -53,7 +56,6 @@ bool UpdateHandler::finish(bool restart) {
         delay(10000);
         ESP.restart();
     }
-
 
     return true;
 }
