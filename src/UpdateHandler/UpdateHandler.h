@@ -13,7 +13,7 @@ class UpdateHandler {
 public:
     void init();
 
-    void setExpectedBytes();
+    void setExpectedBytes(uint32_t expectedBytes);
 
     bool addByte(uint8_t data);
 
@@ -21,6 +21,10 @@ public:
 
 private:
     uint32_t _expectedBytes = 0;
+    uint32_t _fullBuffersCnt = 0;
+    uint32_t _remainingBits = 0;
+
+
     uint32_t _actualBytes = 0;
     uint16_t _bufferPointer = 0;
     uint8_t _buff[BUFFER_SIZE] = {0};
