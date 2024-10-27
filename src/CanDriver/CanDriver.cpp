@@ -67,6 +67,7 @@ bool CanReadFrame(CanMsg *canMsg) {
 }
 
 void CanHandlerLoop() {
+
     CanMsg dataFrame;
     if (CanReadFrame(&dataFrame)) {
     }

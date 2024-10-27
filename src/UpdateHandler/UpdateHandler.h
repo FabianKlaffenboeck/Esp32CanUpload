@@ -7,28 +7,24 @@
 
 #include <cstdint>
 
-#define BUFFER_SIZE 4096
+#define BUFFER_SIZE 1024
+
 
 class UpdateHandler {
 public:
     void init();
 
-    void setExpectedBytes(uint32_t expectedBytes);
+    bool start(uint16_t expectedBytes);
 
-    bool addByte(uint8_t data);
+    bool addByte(uint8_t data, bool lastByte);
 
-    bool finish(bool restart);
+    bool finish();
 
 private:
-    uint32_t _expectedBytes = 0;
-    uint32_t _fullBuffersCnt = 0;
-    uint32_t _remainingBits = 0;
-
-
-    uint32_t _actualBytes = 0;
-    uint16_t _bufferPointer = 0;
-    uint8_t _buff[BUFFER_SIZE] = {0};
-
+    uint16_t _expectedBytes = 0;
+    uint16_t _writtenBytes = 0;
+    uint8_t _update_buffer[BUFFER_SIZE] = {};
+    uint16_t _bufferIndex = 0;
 };
 
 

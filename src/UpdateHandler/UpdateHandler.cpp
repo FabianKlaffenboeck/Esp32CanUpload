@@ -2,60 +2,47 @@
 // Created by FabianKlaffenboeck on 05/09/2024.
 //
 
-#include <Update.h>
 #include "UpdateHandler.h"
+#include <Update.h>
 
 void UpdateHandler::init() {
-    Update.begin(UPDATE_SIZE_UNKNOWN);
 }
 
-void UpdateHandler::setExpectedBytes(uint32_t expectedBytes) {
-    _expectedBytes = expectedBytes;
-
-    _fullBuffersCnt = _expectedBytes / BUFFER_SIZE;
-    _remainingBits = _expectedBytes - (_fullBuffersCnt * BUFFER_SIZE);
+bool UpdateHandler::start(uint16_t expectedBytes) {
+    if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
+        log_e("Update Begin Error: %s\n", Update.errorString());
+        return false;
+    }
+    return true;
 }
 
-bool UpdateHandler::addByte(uint8_t data) {
+bool UpdateHandler::addByte(uint8_t data, bool lastByte = false) {
+    _update_buffer[_bufferIndex] = data;
 
-    _buff[_bufferPointer] = data;
-
-    uint16_t writtenBytes = _bufferPointer;
-    _bufferPointer++;
-
-    bool bufferIsFull = ((BUFFER_SIZE >= writtenBytes) && (_fullBuffersCnt > 0));
-    bool writeRemainingBytes = ((_bufferPointer == _remainingBits) && (_fullBuffersCnt == 0));
-
-    if (bufferIsFull || writeRemainingBytes) {
-        if (_fullBuffersCnt > 0) { _fullBuffersCnt--; }
-
-        uint16_t writtenCount = Update.write(_buff, writtenBytes);
-
-        if (writtenCount != writtenBytes) {
-            log_e("Error while writing Bytes");
+    if ((_bufferIndex == BUFFER_SIZE) || lastByte) {
+        if (Update.write(_update_buffer, _bufferIndex) != _bufferIndex) {
+            log_e("Write Error: %s\n", Update.errorString());
+            Update.abort();
             return false;
         }
-
-        _bufferPointer = 0;
+        _writtenBytes += _bufferIndex;
+        _bufferIndex = 0;
     }
+
+    _bufferIndex++;
 
     return true;
 }
 
-bool UpdateHandler::finish(bool restart) {
-
-    if (_expectedBytes != _actualBytes) {
+bool UpdateHandler::finish() {
+    if (!Update.end(true)) {
+        log_e("Update Failed: %s\n", Update.errorString());
+        Update.abort();
         return false;
     }
 
-    if (!Update.end()) {
-        log_e("Error while Updating");
-    }
-
-    if (restart) {
-        delay(10000);
-        ESP.restart();
-    }
+    log_e("Update Success! Rebooting...");
+    ESP.restart();
 
     return true;
 }
