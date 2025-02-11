@@ -6,6 +6,10 @@
 #include <Arduino.h>
 #include "CanDriver.h"
 
+#include <UpdateHandler/UpdateHandler.h>
+
+UpdateHandler update_handler;
+
 bool CanInit(gpio_num_t rxPin, gpio_num_t txPin, int busSpeed) {
     can_general_config_t g_config = CAN_GENERAL_CONFIG_DEFAULT(rxPin, txPin, CAN_MODE_NORMAL);
     can_timing_config_t t_config = CAN_TIMING_CONFIG_500KBITS();
@@ -65,11 +69,34 @@ bool CanReadFrame(CanMsg *canMsg) {
 void CanHandlerLoop() {
     CanMsg dataFrame;
     if (CanReadFrame(&dataFrame)) {
+        if (dataFrame.id != 0x7d1) {
+            return;
+        }
+
         CommandPacket cmd = frameToCommmand(dataFrame);
-        Serial.println(cmd._cmd);
-        Serial.println(cmd._size);
-        Serial.println(cmd._crc);
-        Serial.println(cmd._targetId);
+
+        if (cmd._cmd == FLASH_BEGIN) {
+            update_handler.start(0);
+        }
+        if (cmd._cmd == FLASH_DATA) {
+            for (int i = 0; i < cmd._size; i++) {
+                update_handler.addByte(cmd._data[i], false);
+            };
+        }
+        if (cmd._cmd == FLASH_END) {
+            update_handler.finish();
+        }
+
+        ResponsePacket response_packet = {
+            ._cmd = 0,
+            ._crc = 0,
+            ._size = 0,
+            ._senderId = 0,
+            ._data = {},
+        };
+
+        CanWrite(responseToCan(response_packet));
+
         // Serial.println("Received data frame");
     }
 }
