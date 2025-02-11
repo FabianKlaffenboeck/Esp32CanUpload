@@ -17,19 +17,13 @@ bool UpdateHandler::start(uint16_t expectedBytes) {
 }
 
 bool UpdateHandler::addByte(uint8_t data, bool lastByte = false) {
-    _update_buffer[_bufferIndex] = data;
-
-    if ((_bufferIndex == BUFFER_SIZE) || lastByte) {
-        if (Update.write(_update_buffer, _bufferIndex) != _bufferIndex) {
-            log_e("Write Error: %s\n", Update.errorString());
-            Update.abort();
-            return false;
-        }
-        _writtenBytes += _bufferIndex;
-        _bufferIndex = 0;
+    if (Update.write(&data, 1) != 1) {
+        log_e("Write Error: %s\n", Update.errorString());
+        Update.abort();
+        return false;
     }
 
-    _bufferIndex++;
+    _recivedBytes++;
 
     return true;
 }
@@ -42,6 +36,7 @@ bool UpdateHandler::finish() {
     }
 
     log_e("Update Success! Rebooting...");
+    delay(1000);
     ESP.restart();
 
     return true;

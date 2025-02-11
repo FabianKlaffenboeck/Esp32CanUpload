@@ -22,9 +22,7 @@ public:
 
 private:
     uint16_t _expectedBytes = 0;
-    uint16_t _writtenBytes = 0;
-    uint8_t _update_buffer[BUFFER_SIZE] = {};
-    uint16_t _bufferIndex = 0;
+    uint16_t _recivedBytes = 0;
 };
 
 

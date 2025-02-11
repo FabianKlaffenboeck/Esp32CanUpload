@@ -7,8 +7,6 @@
 #include "CanDriver.h"
 
 bool CanInit(gpio_num_t rxPin, gpio_num_t txPin, int busSpeed) {
-
-
     can_general_config_t g_config = CAN_GENERAL_CONFIG_DEFAULT(rxPin, txPin, CAN_MODE_NORMAL);
     can_timing_config_t t_config = CAN_TIMING_CONFIG_500KBITS();
     can_filter_config_t f_config = CAN_FILTER_CONFIG_ACCEPT_ALL();
@@ -26,7 +24,6 @@ bool CanInit(gpio_num_t rxPin, gpio_num_t txPin, int busSpeed) {
 
 
 void CanWrite(CanMsg dataFrame) {
-
     can_message_t message;
 
     message.identifier = dataFrame.id;
@@ -48,7 +45,6 @@ void CanWrite(CanMsg dataFrame) {
 }
 
 bool CanReadFrame(CanMsg *canMsg) {
-
     //Wait for rxMessage to be received
     can_message_t rxMessage;
 
@@ -67,8 +63,13 @@ bool CanReadFrame(CanMsg *canMsg) {
 }
 
 void CanHandlerLoop() {
-
     CanMsg dataFrame;
     if (CanReadFrame(&dataFrame)) {
+        CommandPacket cmd = frameToCommmand(dataFrame);
+        Serial.println(cmd._cmd);
+        Serial.println(cmd._size);
+        Serial.println(cmd._crc);
+        Serial.println(cmd._targetId);
+        // Serial.println("Received data frame");
     }
 }
