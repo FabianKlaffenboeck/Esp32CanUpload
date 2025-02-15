@@ -6,57 +6,80 @@
 #include <StreamString.h>
 #include "UpdateHandler.h"
 
-void UpdateHandler::init(uint64_t byteSize, uint8_t updateFs) {
-    planedBytes = byteSize;
-    actualBytes = 0;
-
-    dataBytes = (uint8_t *) malloc(planedBytes * sizeof(uint8_t));
-    if (!Update.begin(planedBytes)) {
-        StreamString str;
-        Update.printError(str);
-        log_e("", str.c_str());
-    }
+void UpdateHandler::init() {
 }
 
-void UpdateHandler::addByte(uint8_t byte) {
-
-    if (Update.write(dataBytes, actualBytes) != actualBytes) {
-        Serial.println("error during update+++++++++++++++++++++++++++++++++++++");
+bool UpdateHandler::start(uint16_t expectedBytes) {
+    if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
+        log_e("Update Begin Error: %s\n", Update.errorString());
+        return false;
     }
-
-//    dataBytes[actualBytes] = byte;
-    actualBytes++;
-
-    if (Update.hasError()) {
-        Serial.println("Error----------------------------------------------------------");
-    }
+    return true;
 }
 
+bool UpdateHandler::set_TX_Hook(void (*tx_fun)(const CanMsg &dataFrame)) {
+    const CanMsg tx_frame = responseToCan({
+        ._cmd = 0,
+        ._crc = 0,
+        ._size = 0,
+        ._senderId = 0,
+        ._data = {},
+    });
+    tx_fun(tx_frame);
 
-void UpdateHandler::completeUpdate(bool reboot, char *md5) {
-//    if (!Update.setMD5(md5)) {
-//        Update.abort();
-//        log_e("ERROR: MD5 hash not valid");
-//        free(dataBytes);
-//        return;
-//    }
+    return true;
+}
 
-    Serial.println(planedBytes);
-    Serial.println(actualBytes);
-
-    if (planedBytes != actualBytes) {
-        log_e("something went terrible wrong");
+bool UpdateHandler::rxHandler(const CanMsg &rx_frame) {
+    if (rx_frame.id != CMD_FRAME_ID) {
+        return false;
     }
 
-    Update.end(true);
-    free(dataBytes);
+    const CommandPacket cmd = frameToCommmand(rx_frame);
 
-    StreamString str;
-    Update.printError(str);
-    log_e("", str.c_str());
+    switch (cmd._cmd) {
+        case FLASH_BEGIN:
+            start(0);
+            break;
+        case FLASH_DATA:
+            for (int i = 0; i < cmd._size; i++) {
+                addByte(cmd._data[i], false);
+            };
+            break;
+        case FLASH_END:
+            finish();
+            break;
+
+        default:
+            return false;
+    }
+
+    return true;
+}
+
+bool UpdateHandler::addByte(uint8_t data, bool lastByte = false) {
+    if (Update.write(&data, 1) != 1) {
+        log_e("Write Error: %s\n", Update.errorString());
+        Update.abort();
+        return false;
+    }
+
+    _recivedBytes++;
+
+    return true;
+}
+
+bool UpdateHandler::finish(bool reboot) {
+    if (!Update.end(true)) {
+        log_e("Update Failed: %s\n", Update.errorString());
+        Update.abort();
+        return false;
+    }
 
     if (reboot) {
+        log_e("Update Success! Rebooting...");
+        delay(1000);
         ESP.restart();
     }
+    return true;
 }
-

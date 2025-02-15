@@ -1,25 +1,36 @@
 //
-// Created by FabianKlaffenboeck on 27/07/2024.
+// Created by FabianKlaffenboeck on 05/09/2024.
 //
 
-#ifndef FIRMWARE_UPDATEHANDLER_H
-#define FIRMWARE_UPDATEHANDLER_H
+#ifndef ESP32CANUPLOAD_UPDATEHANDLER_H
+#define ESP32CANUPLOAD_UPDATEHANDLER_H
 
-#include <cstdlib>
+#include <cstdint>
+#include <iostream>
+#include <CanDriver/CanModels.h>
+
+#define BUFFER_SIZE 1024
+
 
 class UpdateHandler {
 public:
-    void init(uint64_t byteSize, uint8_t updateFs = false);
+    void init();
 
-    void addByte(uint8_t byte);
+    bool start(uint16_t expectedBytes);
 
-    void completeUpdate(bool reboot,char* md5);
+    bool set_TX_Hook(void(* tx_fun)(const CanMsg &dataFrame));
+
+    bool rxHandler(const CanMsg &rx_frame);
+
+    bool addByte(uint8_t data, bool lastByte);
+
+    bool finish(bool reboot = true);
+
 
 private:
-    uint64_t planedBytes = 0;
-    uint64_t actualBytes = 0;
-
-    uint8_t *dataBytes;
+    uint16_t _expectedBytes = 0;
+    uint16_t _recivedBytes = 0;
 };
 
-#endif //FIRMWARE_UPDATEHANDLER_H
+
+#endif //ESP32CANUPLOAD_UPDATEHANDLER_H
