@@ -3,10 +3,10 @@
 //
 
 #include <Update.h>
-#include <StreamString.h>
 #include "UpdateHandler.h"
 
-void UpdateHandler::init() {
+void UpdateHandler::init(void (*tx_fun)(const CanMsg &dataFrame)) {
+    canWriteHandler = tx_fun;
 }
 
 bool UpdateHandler::start(uint16_t expectedBytes) {
@@ -14,18 +14,14 @@ bool UpdateHandler::start(uint16_t expectedBytes) {
         log_e("Update Begin Error: %s\n", Update.errorString());
         return false;
     }
-    return true;
-}
 
-bool UpdateHandler::set_TX_Hook(void (*tx_fun)(const CanMsg &dataFrame)) {
-    const CanMsg tx_frame = responseToCan({
+    canWriteHandler(responseToCan({
         ._cmd = 0,
         ._crc = 0,
         ._size = 0,
         ._senderId = 0,
         ._data = {},
-    });
-    tx_fun(tx_frame);
+    }));
 
     return true;
 }
@@ -45,6 +41,13 @@ bool UpdateHandler::rxHandler(const CanMsg &rx_frame) {
             for (int i = 0; i < cmd._size; i++) {
                 addByte(cmd._data[i], false);
             };
+            canWriteHandler(responseToCan({
+                ._cmd = 0,
+                ._crc = 0,
+                ._size = 0,
+                ._senderId = 0,
+                ._data = {},
+            }));
             break;
         case FLASH_END:
             finish();
@@ -75,6 +78,14 @@ bool UpdateHandler::finish(bool reboot) {
         Update.abort();
         return false;
     }
+
+    canWriteHandler(responseToCan({
+        ._cmd = 0,
+        ._crc = 0,
+        ._size = 0,
+        ._senderId = 0,
+        ._data = {},
+    }));
 
     if (reboot) {
         log_e("Update Success! Rebooting...");

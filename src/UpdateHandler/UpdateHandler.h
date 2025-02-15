@@ -6,7 +6,6 @@
 #define ESP32CANUPLOAD_UPDATEHANDLER_H
 
 #include <cstdint>
-#include <iostream>
 #include <CanDriver/CanModels.h>
 
 #define BUFFER_SIZE 1024
@@ -14,11 +13,9 @@
 
 class UpdateHandler {
 public:
-    void init();
+    void init(void (*tx_fun)(const CanMsg &dataFrame));
 
     bool start(uint16_t expectedBytes);
-
-    bool set_TX_Hook(void(* tx_fun)(const CanMsg &dataFrame));
 
     bool rxHandler(const CanMsg &rx_frame);
 
@@ -26,10 +23,11 @@ public:
 
     bool finish(bool reboot = true);
 
-
 private:
     uint16_t _expectedBytes = 0;
     uint16_t _recivedBytes = 0;
+
+    void (*canWriteHandler)(const CanMsg &dataFrame) = nullptr;
 };
 
 

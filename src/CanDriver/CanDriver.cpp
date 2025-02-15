@@ -6,7 +6,8 @@
 #include <Arduino.h>
 #include "CanDriver.h"
 
-#include <vector>
+#include <driver/can.h>
+#include <hal/can_types.h>
 
 
 static can_callback_t callbacks[MAX_CALLBACKS];
