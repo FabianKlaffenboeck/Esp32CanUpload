@@ -6,7 +6,7 @@
 #define ESP32CANUPLOAD_UPDATEHANDLER_H
 
 #include <cstdint>
-#include <CanDriver/CanModels.h>
+#include <CanModels.h>
 
 #define BUFFER_SIZE 1024
 

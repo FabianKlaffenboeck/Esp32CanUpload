@@ -2,10 +2,9 @@
 // Created by FabianKlaffenboeck on 24/07/2024.
 //
 
-#include <esp32-hal-log.h>
 #include <Arduino.h>
 #include "CanDriver.h"
-
+#include <esp32-hal-log.h>
 #include <driver/can.h>
 #include <hal/can_types.h>
 

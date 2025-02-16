@@ -6,6 +6,7 @@
 #define FIRMWARE_CANDRIVER_H
 
 #include "CanModels.h"
+#include <driver/can.h>
 
 #define MAX_CALLBACKS  10
 

@@ -5,6 +5,8 @@
 #ifndef FIRMWARE_CANMODELS_H
 #define FIRMWARE_CANMODELS_H
 
+#include <stdint.h>
+
 #define LIST_DEVICES 0x01
 #define FLASH_BEGIN 0x02
 #define FLASH_DATA 0x03

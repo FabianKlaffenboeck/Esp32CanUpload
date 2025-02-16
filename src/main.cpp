@@ -1,8 +1,7 @@
 #include <Arduino.h>
-#include <UpdateHandler/UpdateHandler.h>
 
-#include "CanDriver/CanDriver.h"
-
+#include "../lib/CanDriver/CanDriver.h"
+#include "../lib/UpdateHandler/UpdateHandler.h"
 
 UpdateHandler update_handler;
 
